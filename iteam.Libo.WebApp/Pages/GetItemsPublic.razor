@@ -1,0 +1,84 @@
+﻿@page "/publicItems"
+@using iteam.Libo.Common.Dto
+@inject Services.ItemService ItemService
+
+<h1>Items</h1>
+
+@if (items == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="bordered-table">
+        <thead>
+            <tr>
+                <th>Item ID</th>
+                <th>Article Title</th>
+                <th>Category Name</th>
+                <th>ISBN</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in items)
+            {
+                <tr style="@((item.IsBorrowed) ? "background-color: #f2d5d5;" : string.Empty)">
+                    <td>@item.ItemId</td>
+                    <td>
+                        @if (item.CategoryName == "Video") // Check if the item is a video
+                        {
+                            <!-- If the item is a video, make the title clickable -->
+                            <a href="@item.Url" target="_blank">@item.ArticleTitle</a>
+                        }
+                        else
+                        {
+                            <!-- If the item is not a video, just display the title -->
+                            @item.ArticleTitle
+                        }
+                    </td>
+                    <td>@item.CategoryName</td>
+                    <td>@item.ISBN</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ItemDto> items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch all items using the ItemService
+        items = await ItemService.GetItemsAsync();
+    }
+}
+
+<style>
+    /* Define styles for the bordered table */
+    .bordered-table {
+        border-collapse: collapse;
+        width: 100%; /* Adjust width as needed */
+    }
+
+        /* Add border to the table, rows, and cells */
+        .bordered-table th, .bordered-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left; /* Adjust alignment as needed */
+        }
+
+        /* Style the header row */
+        .bordered-table thead {
+            background-color: #f2f2f2; /* Optional: Add a background color */
+        }
+
+        /* Add styling for rows that are borrowed */
+        .bordered-table tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+            .bordered-table tbody tr:hover {
+                background-color: #f2d5d5;
+            }
+</style>

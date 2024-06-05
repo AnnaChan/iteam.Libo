@@ -1,0 +1,156 @@
+﻿@page "/items"
+@using iteam.Libo.Common.Dto
+@inject Services.ItemService ItemService
+@inject HttpClient Http
+
+<h1>Items</h1>
+
+<!-- Add an input field for borrowerId -->
+<div>
+    <label for="borrowerIdInput">Enter Borrower ID:</label>
+    <input id="borrowerIdInput" type="number" @bind="borrowerId" />
+</div>
+
+@if (items == null)
+{
+        <p>Loading...</p>
+}
+else
+{
+        <table class="bordered-table">
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th>Article Title</th>
+                    <th>Category Name</th>
+                    <th>ISBN</th>
+                    <th>Action</th> <!-- Add action column -->
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in items)
+            {
+                    <tr style="@((item.IsBorrowed) ? "background-color: #f2d5d5;" : string.Empty)">
+                        <td>@item.ItemId</td>
+                        <td>@item.ArticleTitle</td> <!-- Display the title for all items -->
+                        <td>@item.CategoryName</td>
+                        <td>@item.ISBN</td>
+                        <td>
+                        @if (item.CategoryName == "Video")
+                        {
+                                    <!-- Display the clickable URL in the action column if the item is a video -->
+                                    <a href="@item.Url" target="_blank">Watch Video</a>
+                        }
+                        else
+                        {
+                                    <!-- Add action buttons for items that are not videos -->
+                            @if (item.IsBorrowed)
+                            {
+                                            <!-- Return button for borrowed items -->
+                                            <button @onclick="() => ReturnItem(item.ItemId)">Return</button>
+                            }
+                            else
+                            {
+                                            <!-- Borrow button for items that are not borrowed -->
+                                            <button @onclick="() => BorrowItem(item.ItemId)">Borrow</button>
+                            }
+                        }
+                        </td>
+                    </tr>
+            }
+            </tbody>
+        </table>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+        <!-- Display the error message -->
+        <p style="color: red;">@errorMessage</p>
+}
+
+@code {
+    private List<ItemDto> items;
+    private string errorMessage;
+    private int borrowerId; // Declare the borrower ID variable
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch all items using the ItemService
+        items = await ItemService.GetItemsAsync();
+    }
+
+    // Method to handle returning an item
+    private async Task ReturnItem(int itemId)
+    {
+        // Call the /items/{id}/return endpoint
+        var response = await Http.PutAsync($"/items/{itemId}/return", null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Refresh the items list after the action
+            items = await ItemService.GetItemsAsync();
+            errorMessage = string.Empty;
+        }
+        else
+        {
+            // Handle error and display message to the user
+            errorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+
+    // Method to handle borrowing an item
+    private async Task BorrowItem(int itemId)
+    {
+        // Create an instance of BorrowItemDto with the current itemId and inputted borrowerId
+        var borrowItemDto = new BorrowItemDto(itemId, borrowerId);
+
+        try
+        {
+            // Make a POST request to the /items/borrow endpoint with the JSON content
+            var response = await Http.PostAsJsonAsync("/items/borrow", borrowItemDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Refresh the items list after the action
+                items = await ItemService.GetItemsAsync();
+                errorMessage = string.Empty;
+            }
+            else
+            {
+                // Handle error and display message to the user
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle unexpected errors and display the error message to the user
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+}
+
+<style>
+    /* Define styles for the bordered table */
+    .bordered-table {
+        border-collapse: collapse;
+        width: 100%; /* Adjust width as needed */
+    }
+
+    /* Add border to the table, rows, and cells */
+    .bordered-table th, .bordered-table td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left; /* Adjust alignment as needed */
+    }
+
+    /* Style the header row */
+    .bordered-table thead {
+        background-color: #f2f2f2;
+    }
+
+    /* Add styling for rows that are borrowed */
+    .bordered-table tbody tr:hover {
+        background-color: #f2d5d5;
+    }
+</style>

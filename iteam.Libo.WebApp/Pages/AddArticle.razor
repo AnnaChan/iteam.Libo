@@ -1,0 +1,112 @@
+﻿@page "/add-article"
+@using iteam.Libo.Common
+@using iteam.Libo.Common.Dto
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>Add Article</h3>
+
+<div class="container">
+    <EditForm Model="article" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <!-- Form fields for article properties -->
+        <div class="form-group">
+            <label for="title">Title</label>
+            <InputText id="title" @bind-Value="article.Title" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <InputTextArea id="description" @bind-Value="article.Description" class="form-control" rows="6" required />
+        </div>
+
+        <div class="form-group">
+            <label for="author">Author</label>
+            <InputText id="author" @bind-Value="article.Author" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="isbn">ISBN</label>
+            <InputText id="isbn" @bind-Value="article.Isbn" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="url">URL</label>
+            <InputText id="url" @bind-Value="article.Url" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label for="categoryId">Category ID</label>
+            <InputNumber id="categoryId" @bind-Value="article.CategoryId" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="numberOfCopies">Number of Copies</label>
+            <InputNumber id="numberOfCopies" @bind-Value="numberOfCopies" class="form-control" min="1" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </EditForm>
+</div>
+
+@code {
+    private Article article = new Article();
+    private int numberOfCopies = 1;
+
+    private async Task HandleSubmit()
+    {
+        // Ensure Http and article objects are not null
+        if (Http == null || article == null)
+        {
+            Console.Error.WriteLine("Http client or article object is null.");
+            return;
+        }
+
+        // Define the API endpoint URL for the POST request with the number of copies as a query parameter
+        string apiEndpoint = $"/articles/add?copies={numberOfCopies}";
+
+        // Create an instance of ArticleDto with the form data
+        var articleDto = new ArticleDto(
+            article.Id,
+            article.Title,
+            article.Description,
+            article.Author,
+            article.Isbn,
+            article.Url,
+            article.CategoryId,
+            article.Category?.Name ?? string.Empty
+        );
+
+        try
+        {
+            // Log the request URL and ArticleDto data
+            Console.WriteLine($"Sending request to URL: {apiEndpoint}");
+            Console.WriteLine($"ArticleDto: {articleDto}");
+
+            // Send a POST request with the ArticleDto as the request body
+            var response = await Http.PostAsJsonAsync(apiEndpoint, articleDto);
+
+            // Check the response status code
+            if (response.IsSuccessStatusCode)
+            {
+                // If successful, navigate to the articles page
+                Navigation.NavigateTo("/articles");
+            }
+            else
+            {
+                // Log the error response and status code
+                Console.Error.WriteLine($"Failed to add article and copies: {response.StatusCode} {response.ReasonPhrase}");
+                // Optionally, log the response body for more details
+                var responseBody = await response.Content.ReadAsStringAsync();
+                Console.Error.WriteLine($"Response body: {responseBody}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log any exceptions
+            Console.Error.WriteLine($"Error during form submission: {ex.Message}");
+        }
+    }
+
+}

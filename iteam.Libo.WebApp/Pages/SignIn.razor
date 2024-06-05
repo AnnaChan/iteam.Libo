@@ -1,0 +1,80 @@
+﻿@page "/sign-in"
+@using System.Net.Http.Json
+
+<h3>Sign In</h3>
+
+<div class="container">
+    <EditForm Model="signInModel" OnValidSubmit="HandleSignIn">
+        <DataAnnotationsValidator />
+
+        <!-- Email Field -->
+       <div class="form-group">
+    <label for="email">Email</label>
+    <!-- Use @bind-Value for two-way binding to the Email property of signInModel -->
+    <InputText id="email" @bind-Value="signInModel.Email" class="form-control" required />
+</div>
+
+<div class="form-group">
+    <label for="password">Password</label>
+    <!-- Use @bind-Value for two-way binding to the Password property of signInModel -->
+    <InputPassword id="password" @bind-Value="signInModel.Password" class="form-control" required />
+</div>
+
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Sign In</button>
+    </EditForm>
+    
+    <!-- Display error message if there is a problem signing in -->
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    // Model to hold the sign-in data
+    private SignInModel signInModel = new SignInModel();
+    
+    // Variable to hold any error message from sign-in attempt
+    private string errorMessage = string.Empty;
+    
+    // Method to handle form submission
+    private async Task HandleSignIn()
+    {
+        // Define the API endpoint URL for the sign-in request
+        string apiEndpoint = "/api/sign-in";
+
+        try
+        {
+            // Send a POST request with the sign-in data
+            var response = await Http.PostAsJsonAsync(apiEndpoint, signInModel);
+            
+            // Check the response status code
+            if (response.IsSuccessStatusCode)
+            {
+                // If successful, navigate to a different page (e.g., home page)
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                // If unsuccessful, display an error message
+                errorMessage = "Failed to sign in. Please check your email and password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions and set an error message
+            errorMessage = $"Error during sign-in: {ex.Message}";
+        }
+    }
+}
+
+// Define the model to hold the sign-in data
+public class SignInModel
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
+}

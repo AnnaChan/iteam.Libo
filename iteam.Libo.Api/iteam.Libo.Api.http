@@ -1,0 +1,6 @@
+@iteam.Libo.Api_HostAddress = http://localhost:5215
+
+GET {{iteam.Libo.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

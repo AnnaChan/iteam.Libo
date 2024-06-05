@@ -1,0 +1,89 @@
+﻿@page "/articles"
+@using iteam.Libo.Common
+@inject HttpClient httpClient
+@inject Services.ArticleService ArticleService
+
+<h1>Articles</h1>
+
+@if (articles == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="bordered-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Description</th>
+                <th>Url</th>
+                <th>Isbn</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var article in articles)
+            {
+                <tr>
+                    <td>@article.Title</td>
+                    <td>@article.Author</td>
+                    <td>@article.Description</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(article.Url))
+                        {
+                            <!-- If the URL is not null or empty, make it a clickable link -->
+                            <a href="@article.Url" target="_blank">@article.Url</a>
+                        }
+                        else
+                        {
+                            
+                        }
+                    </td>
+                    <td>@article.Isbn</td>
+                </tr>
+
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Article> articles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        articles = await ArticleService.GetArticlesAsync();
+    }
+}
+
+<style>
+    /* Define styles for the bordered table */
+    .bordered-table {
+        border-collapse: collapse;
+        width: 100%; /* Optional: Adjust the width as needed */
+    }
+
+        /* Add border to the table, rows, and cells */
+        .bordered-table th, .bordered-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left; /* Adjust alignment as needed */
+        }
+
+        /* Add styling to the header row */
+        .bordered-table thead {
+            background-color: #f2f2f2; /* Optional: Add a background color */
+        }
+
+        /* Add styling for table rows */
+        .bordered-table tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+            /* Add pale rose color when the mouse hovers over the rows */
+            .bordered-table tbody tr:hover {
+                background-color: #f2d5d5; /* Pale rose color */
+            }
+</style>
+
+
